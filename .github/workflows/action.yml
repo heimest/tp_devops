@@ -33,9 +33,16 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon -x test
 
-      - name: Run tests
+      - name: Run tests and generate coverage
         run: |
-          ./gradlew test --no-daemon
+          ./gradlew test jacocoTestReport --no-daemon
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/jacoco/test/jacocoTestReport.xml
+          fail_ci_if_error: false
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
@@ -51,6 +58,20 @@ jobs:
         with:
           name: test-report
           path: build/reports/tests/test/
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze with SonarCloud
+        env:
+          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          ./gradlew build sonar --no-daemon
 
       - name: Build Docker image
         run: |
