@@ -59,12 +59,19 @@ jobs:
           name: test-report
           path: build/reports/tests/test/
 
-      - name: SonarCloud analysis
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze with SonarCloud
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./gradlew sonar --no-daemon
+          ./gradlew build sonar --no-daemon
 
       - name: Build Docker image
         run: |
